@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HaircutBookingSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Logging;
 
 namespace HaircutBookingSystem.Controllers
 {
@@ -18,7 +19,7 @@ namespace HaircutBookingSystem.Controllers
             new Service { Id = 4, Name = "Beard Trim",    Price = 15 }
         };
 
-        // In-memory list of stylists (no database changes required).
+        // In-memory list of stylists.
         private static readonly List<Stylist> _stylists = new()
         {
             new Stylist { Id = 1, Name = "Alex" },
@@ -26,26 +27,44 @@ namespace HaircutBookingSystem.Controllers
             new Stylist { Id = 3, Name = "Sam" }
         };
 
-        // Simple in-memory store for booked appointments so we can detect unavailable slots.
-        // This does NOT change the database; it only lives while the app is running.
+        // Simple in-memory store for booked appointments.
         private sealed class BookedSlot
         {
             public DateOnly Date { get; }
             public TimeSpan Time { get; }
             public int StylistId { get; }
 
-            public BookedSlot(DateOnly date, TimeSpan time, int stylistId)
+            public string CustomerName { get; }
+            public string Email { get; }
+
+            // Has a reminder already been sent for this appointment?
+            public bool ReminderSent { get; set; }
+
+            // Combined Date + Time as a DateTime for comparisons
+            public DateTime AppointmentDateTime =>
+                new DateTime(Date.Year, Date.Month, Date.Day,
+                             Time.Hours, Time.Minutes, Time.Seconds);
+
+            public BookedSlot(DateOnly date, TimeSpan time, int stylistId, string customerName, string email)
             {
                 Date = date;
                 Time = time;
                 StylistId = stylistId;
+                CustomerName = customerName;
+                Email = email;
+                ReminderSent = false;
             }
         }
 
         private static readonly List<BookedSlot> _bookedSlots = new();
 
-        public BookingController()
+        // Logger + reminder configuration
+        private readonly ILogger<BookingController> _logger;
+        private const int ReminderHoursBefore = 24; // send reminders 24 hours before appointment
+
+        public BookingController(ILogger<BookingController> logger)
         {
+            _logger = logger;
         }
 
         [HttpGet]
@@ -53,6 +72,7 @@ namespace HaircutBookingSystem.Controllers
         {
             ViewBag.ServiceList = new SelectList(_services, nameof(Service.Id), nameof(Service.Name));
             ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.Id), nameof(Stylist.Name));
+
             return View(new BookingRequest());
         }
 
@@ -60,20 +80,36 @@ namespace HaircutBookingSystem.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Index(BookingRequest model)
         {
+            // Repopulate dropdowns when returning the view
             ViewBag.ServiceList = new SelectList(_services, nameof(Service.Id), nameof(Service.Name));
             ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.Id), nameof(Stylist.Name));
 
+            // 1. Run all model-level validation first
+            //    - Required, Range, email, phone
+            //    - IValidatableObject (future date/time, opening hours)
             if (!ModelState.IsValid)
                 return View(model);
 
-            if (model.Time is null)
+            // 2. Ensure the selected service actually exists
+            var chosenService = _services.FirstOrDefault(s => s.Id == model.ServiceId);
+            if (chosenService == null)
             {
-                ModelState.AddModelError(nameof(model.Time), "Please choose a time.");
+                ModelState.AddModelError(nameof(model.ServiceId), "The selected service is invalid.");
                 return View(model);
             }
 
-            // Enforce 30-minute increments server-side
-            var totalMinutes = model.Time.Value.TotalMinutes;
+            // 3. Ensure the selected stylist actually exists
+            var chosenStylist = _stylists.FirstOrDefault(s => s.Id == model.StylistId);
+            if (chosenStylist == null)
+            {
+                ModelState.AddModelError(nameof(model.StylistId), "The selected stylist is invalid.");
+                return View(model);
+            }
+
+            // 4. Enforce 30-minute increments server-side
+            //    (we know Time has a value because ModelState is valid)
+            var time = model.Time!.Value;
+            var totalMinutes = time.TotalMinutes;
             if (totalMinutes % 30 != 0)
             {
                 ModelState.AddModelError(nameof(model.Time),
@@ -81,27 +117,13 @@ namespace HaircutBookingSystem.Controllers
                 return View(model);
             }
 
-            if (!model.Date.HasValue)
-            {
-                ModelState.AddModelError(nameof(model.Date), "Please choose a date.");
-                return View(model);
-            }
-
-            if (model.StylistId == 0)
-            {
-                ModelState.AddModelError(nameof(model.StylistId), "Please choose a stylist.");
-                return View(model);
-            }
-
-            var chosenService = _services.First(s => s.Id == model.ServiceId);
-            var chosenStylist = _stylists.First(s => s.Id == model.StylistId);
-
-            var appointmentDate = DateOnly.FromDateTime(model.Date.Value.Date);
-            var appointmentTime = model.Time.Value;
+            // 5. Build appointment date/time
+            var appointmentDate = DateOnly.FromDateTime(model.Date!.Value.Date);
+            var appointmentTime = time;
             var dateText = model.Date.Value.ToString("dddd, MMM d, yyyy");
             var timeText = appointmentTime.ToString(@"hh\:mm");
 
-            // Check if this exact date/time/stylist combination is already booked.
+            // 6. Check if this exact date/time/stylist is already booked
             var isTaken = _bookedSlots.Any(b =>
                 b.Date == appointmentDate &&
                 b.Time == appointmentTime &&
@@ -115,13 +137,19 @@ namespace HaircutBookingSystem.Controllers
                 TempData["DateText"] = dateText;
                 TempData["TimeText"] = timeText;
 
+                // Backend rejects the booking as unavailable
                 return RedirectToAction(nameof(Unavailable));
             }
 
-            // Otherwise, mark this slot as booked (in-memory only; no database changes).
-            _bookedSlots.Add(new BookedSlot(appointmentDate, appointmentTime, model.StylistId));
+            // 7. Slot is free: mark it booked (in-memory only) INCLUDING email + name for reminders
+            _bookedSlots.Add(new BookedSlot(
+                appointmentDate,
+                appointmentTime,
+                model.StylistId,
+                model.FullName,
+                model.Email));
 
-            // Pass booking details to the success page (screen-only confirmation, no email).
+            // Pass booking details to the success page (screen-only confirmation)
             TempData["CustomerName"] = model.FullName;
             TempData["ServiceName"] = chosenService.Name;
             TempData["StylistName"] = chosenStylist.Name;
@@ -133,13 +161,61 @@ namespace HaircutBookingSystem.Controllers
 
         public IActionResult Success()
         {
-            // Renders Views/Booking/Success.cshtml
             return View();
         }
 
         public IActionResult Unavailable()
         {
-            // Renders Views/Booking/Unavailable.cshtml when a slot is already taken.
+            return View();
+        }
+
+        // -------- Sprint 1: email reminders --------
+
+        // Manually trigger sending reminders (e.g., via URL /Booking/SendReminders)
+        public IActionResult SendReminders()
+        {
+            var now = DateTime.Now;
+
+            // Find appointments in the next 24 hours that haven't been reminded yet
+            var remindersToSend = _bookedSlots
+                .Where(b => !b.ReminderSent)
+                .Where(b => b.AppointmentDateTime > now)
+                .Where(b => (b.AppointmentDateTime - now).TotalHours <= ReminderHoursBefore)
+                .ToList();
+
+            foreach (var slot in remindersToSend)
+            {
+                try
+                {
+                    // Simulate sending an email reminder by logging it
+                    _logger.LogInformation(
+                        "Sending reminder email to {Email} for appointment on {DateTime} (Customer: {Customer})",
+                        slot.Email,
+                        slot.AppointmentDateTime,
+                        slot.CustomerName);
+
+                    // TODO (real system): call email service / SMTP client here.
+
+                    slot.ReminderSent = true;
+                }
+                catch (Exception ex)
+                {
+                    // Log any errors while "sending" reminders
+                    _logger.LogError(
+                        ex,
+                        "Error sending reminder to {Email} for appointment on {DateTime}",
+                        slot.Email,
+                        slot.AppointmentDateTime);
+                }
+            }
+
+            TempData["RemindersSentCount"] = remindersToSend.Count;
+            return RedirectToAction(nameof(RemindersResult));
+        }
+
+        public IActionResult RemindersResult()
+        {
+            ViewBag.RemindersSentCount = TempData["RemindersSentCount"] ?? 0;
             return View();
         }
     }
