@@ -1,65 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using HaircutBookingSystem.Models;
-using HaircutBookingSystem.Services;      // <-- IEmailSender lives here
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.Configuration;
 
 namespace HaircutBookingSystem.Controllers
 {
-    /*
-     HOW SMTP PLUGS IN (read this once, then skim the rest)
-     ------------------------------------------------------
-     1) TODAY (no SMTP): We show a confirmation screen only.
-        - appsettings.json has:  "Email": { "Send": false }
-        - Controller reads that flag and SKIPS sending.
-
-     2) WHEN YOU GET AN SMTP PROVIDER (Brevo, Mailjet, Gmail Workspace, SES, etc.):
-        - Put their SMTP settings under "Smtp" in appsettings.json (Host/Port/SSL/Username/Password/FromAddress/FromName).
-        - Flip the switch:  "Email": { "Send": true }
-        - Make sure Program.cs registers SmtpEmailSender as IEmailSender (the earlier guide already showed this).
-          Example in Program.cs:
-              var smtpOptions = builder.Configuration.GetSection("Smtp").Get<SmtpOptions>() ?? new SmtpOptions();
-              builder.Services.AddSingleton(smtpOptions);
-              builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
-
-     3) OPTIONAL BUT RECOMMENDED:
-        - Add a Reply-To so customers can answer (see comment below near SendAsync).
-        - Store secrets safely (User Secrets in dev, environment variables in prod).
-        - Add SPF/DKIM/DMARC DNS records at your domain so email avoids spam.
-
-     4) EXAMPLE appsettings.json SNIPPET (you can paste into your file and edit):
-        {
-          "Logging": { "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" } },
-          "AllowedHosts": "*",
-
-          "Email": { "Send": false },  // <-- set to true when ready to send real emails
-
-          "Smtp": {
-            "Host": "smtp-relay.brevo.com",   // or smtp.gmail.com, smtp.mailjet.com, email-smtp.us-east-1.amazonaws.com, etc.
-            "Port": 587,
-            "UseSsl": true,
-            "Username": "YOUR_SMTP_USERNAME_OR_apikey",
-            "Password": "YOUR_SMTP_PASSWORD_OR_API_KEY",   // store in User Secrets / env var in real life
-            "FromAddress": "noreply@yourdomain.com",
-            "FromName": "Good Vibes Barbershop"
-          }
-        }
-
-     5) WHEN YOU HAVE A DATABASE:
-        - Create and save a Booking record BEFORE sending the email.
-        - Include a confirmation number in the email body (nice touch).
-    */
-
     public class BookingController : Controller
     {
-        private readonly IEmailSender _emailSender;   // <-- This will send real email once Email:Send = true + SMTP is configured
-        private readonly bool _sendEmails;            // <-- Our simple on/off switch from appsettings.json
-
-        // For now we hard-code a few services. Replace with DB later.
+        // In-memory list of services (still not using the database for this demo).
         private static readonly List<Service> _services = new()
         {
             new Service { Id = 1, Name = "Haircut",       Price = 25 },
@@ -68,85 +18,113 @@ namespace HaircutBookingSystem.Controllers
             new Service { Id = 4, Name = "Beard Trim",    Price = 15 }
         };
 
-        public BookingController(IEmailSender emailSender, IConfiguration config)
+        // In-memory list of stylists (no database changes required).
+        private static readonly List<Stylist> _stylists = new()
         {
-            _emailSender = emailSender;
+            new Stylist { Id = 1, Name = "Alex" },
+            new Stylist { Id = 2, Name = "Jordan" },
+            new Stylist { Id = 3, Name = "Sam" }
+        };
 
-            // Reads Email:Send from appsettings.json (false = skip sending, true = send via SMTP)
-            // Example: "Email": { "Send": false }
-            _sendEmails = config.GetValue<bool>("Email:Send");
+        // Simple in-memory store for booked appointments so we can detect unavailable slots.
+        // This does NOT change the database; it only lives while the app is running.
+        private sealed class BookedSlot
+        {
+            public DateOnly Date { get; }
+            public TimeSpan Time { get; }
+            public int StylistId { get; }
+
+            public BookedSlot(DateOnly date, TimeSpan time, int stylistId)
+            {
+                Date = date;
+                Time = time;
+                StylistId = stylistId;
+            }
+        }
+
+        private static readonly List<BookedSlot> _bookedSlots = new();
+
+        public BookingController()
+        {
         }
 
         [HttpGet]
         public IActionResult Index()
         {
             ViewBag.ServiceList = new SelectList(_services, nameof(Service.Id), nameof(Service.Name));
+            ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.Id), nameof(Stylist.Name));
             return View(new BookingRequest());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(BookingRequest model)
+        public IActionResult Index(BookingRequest model)
         {
             ViewBag.ServiceList = new SelectList(_services, nameof(Service.Id), nameof(Service.Name));
+            ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.Id), nameof(Stylist.Name));
 
             if (!ModelState.IsValid)
                 return View(model);
 
-            // (When you have a DB) — Create and save a Booking entity here, then continue.
-            // Example (later): _db.Bookings.Add(booking); await _db.SaveChangesAsync();
+            if (model.Time is null)
+            {
+                ModelState.AddModelError(nameof(model.Time), "Please choose a time.");
+                return View(model);
+            }
+
+            // Enforce 30-minute increments server-side
+            var totalMinutes = model.Time.Value.TotalMinutes;
+            if (totalMinutes % 30 != 0)
+            {
+                ModelState.AddModelError(nameof(model.Time),
+                    "Please choose a time in 30-minute increments (for example, 9:00, 9:30, 10:00).");
+                return View(model);
+            }
+
+            if (!model.Date.HasValue)
+            {
+                ModelState.AddModelError(nameof(model.Date), "Please choose a date.");
+                return View(model);
+            }
+
+            if (model.StylistId == 0)
+            {
+                ModelState.AddModelError(nameof(model.StylistId), "Please choose a stylist.");
+                return View(model);
+            }
 
             var chosenService = _services.First(s => s.Id == model.ServiceId);
-            var dateText = model.Date?.ToString("dddd, MMM d, yyyy") ?? "(date)";
-            var timeText = model.Time?.ToString() ?? "(time)";
+            var chosenStylist = _stylists.First(s => s.Id == model.StylistId);
 
-            // Email subject + HTML body (safe to reuse for both customer and shop inbox).
-            string subject = $"Your {chosenService.Name} booking request";
-            string html = $@"
-                <h2>Thanks for your request, {System.Net.WebUtility.HtmlEncode(model.FullName)}!</h2>
-                <p>We received your booking:</p>
-                <ul>
-                    <li><strong>Service:</strong> {System.Net.WebUtility.HtmlEncode(chosenService.Name)}</li>
-                    <li><strong>Date:</strong> {dateText}</li>
-                    <li><strong>Time:</strong> {timeText}</li>
-                </ul>
-                <p>If you need to change anything, just reply to this email.</p>";
+            var appointmentDate = DateOnly.FromDateTime(model.Date.Value.Date);
+            var appointmentTime = model.Time.Value;
+            var dateText = model.Date.Value.ToString("dddd, MMM d, yyyy");
+            var timeText = appointmentTime.ToString(@"hh\:mm");
 
-            if (_sendEmails)
+            // Check if this exact date/time/stylist combination is already booked.
+            var isTaken = _bookedSlots.Any(b =>
+                b.Date == appointmentDate &&
+                b.Time == appointmentTime &&
+                b.StylistId == model.StylistId);
+
+            if (isTaken)
             {
-                try
-                {
-                    // REAL EMAIL PATH (runs when Email:Send = true AND Program.cs wires IEmailSender to SmtpEmailSender).
-                    // Inside SmtpEmailSender.SendAsync we build the MailMessage:
-                    //   - From = SmtpOptions.FromAddress/FromName
-                    //   - To = model.Email
-                    //   - Subject/Body = provided below
-                    //
-                    // TIP: Add a Reply-To so customers can respond to a monitored inbox.
-                    // In SmtpEmailSender before SendMailAsync(...):
-                    //     message.ReplyToList.Add(new MailAddress("appointments@yourdomain.com", "Appointments"));
-                    //
-                    // TIP: You can also BCC the shop or send a separate notification:
-                    //     await _emailSender.SendAsync("appointments@yourdomain.com", $"New booking from {model.FullName}", html);
+                TempData["CustomerName"] = model.FullName;
+                TempData["ServiceName"] = chosenService.Name;
+                TempData["StylistName"] = chosenStylist.Name;
+                TempData["DateText"] = dateText;
+                TempData["TimeText"] = timeText;
 
-                    await _emailSender.SendAsync(model.Email, subject, html);
-                }
-                catch (Exception)
-                {
-                    // Do not crash the booking flow. Show a friendly note.
-                    // Also log the real exception with ILogger<BookingController> in production.
-                    TempData["EmailNote"] = "We could not send an email right now, but your request was received.";
-                }
-            }
-            else
-            {
-                // DEV/temporary mode: tell the user this is screen-only confirmation.
-                TempData["EmailNote"] = "Email sending is temporarily disabled; this is a screen confirmation only.";
+                return RedirectToAction(nameof(Unavailable));
             }
 
-            // Pass booking details to the success page (simple approach for now).
+            // Otherwise, mark this slot as booked (in-memory only; no database changes).
+            _bookedSlots.Add(new BookedSlot(appointmentDate, appointmentTime, model.StylistId));
+
+            // Pass booking details to the success page (screen-only confirmation, no email).
             TempData["CustomerName"] = model.FullName;
             TempData["ServiceName"] = chosenService.Name;
+            TempData["StylistName"] = chosenStylist.Name;
             TempData["DateText"] = dateText;
             TempData["TimeText"] = timeText;
 
@@ -156,6 +134,12 @@ namespace HaircutBookingSystem.Controllers
         public IActionResult Success()
         {
             // Renders Views/Booking/Success.cshtml
+            return View();
+        }
+
+        public IActionResult Unavailable()
+        {
+            // Renders Views/Booking/Unavailable.cshtml when a slot is already taken.
             return View();
         }
     }

@@ -32,9 +32,9 @@ app.UseRouting();
 app.UseAuthentication(); // if using Identity
 app.UseAuthorization();
 
-// Default route goes to Booking/Index
+// Default route goes to Homepage
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Booking}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

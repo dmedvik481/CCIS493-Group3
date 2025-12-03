@@ -1,66 +1,68 @@
 ﻿@model HaircutBookingSystem.Models.BookingRequest
 @{
-	ViewData["Title"] = "Book a Service";
+    ViewData["Title"] = "Book a Service";
 }
 <h1 class="mt-3 mb-4">Book a Service</h1>
 
-
 <div class="row">
-	<div class="col-12 col-md-8 col-lg-6">
-		<form asp-action="Index" method="post" class="needs-validation" novalidate>
-			@Html.AntiForgeryToken()
+    <div class="col-12 col-md-8 col-lg-6">
+        <form asp-action="Index" method="post" class="needs-validation" novalidate>
+            @Html.AntiForgeryToken()
 
+            <div class="mb-3">
+                <label asp-for="ServiceId" class="form-label"></label>
+                <select asp-for="ServiceId" class="form-select" asp-items="ViewBag.ServiceList">
+                    <option value="">-- Select a service --</option>
+                </select>
+                <span class="text-danger" asp-validation-for="ServiceId"></span>
+            </div>
 
-			<div class="mb-3">
-				<label asp-for="ServiceId" class="form-label"></label>
-				<select asp-for="ServiceId" class="form-select" asp-items="ViewBag.ServiceList">
-					<option value="">-- Select a service --</option>
-				</select>
-				<span class="text-danger" asp-validation-for="ServiceId"></span>
-			</div>
+            <div class="mb-3">
+                <label asp-for="StylistId" class="form-label"></label>
+                <select asp-for="StylistId" class="form-select" asp-items="ViewBag.StylistList">
+                    <option value="">-- Select a stylist --</option>
+                </select>
+                <span class="text-danger" asp-validation-for="StylistId"></span>
+            </div>
 
+            <div class="mb-3">
+                <label asp-for="Date" class="form-label"></label>
+                <input asp-for="Date" class="form-control" />
+                <span class="text-danger" asp-validation-for="Date"></span>
+            </div>
 
-			<div class="mb-3">
-				<label asp-for="Date" class="form-label"></label>
-				<input asp-for="Date" class="form-control" />
-				<span class="text-danger" asp-validation-for="Date"></span>
-			</div>
+            <div class="mb-3">
+                <label asp-for="Time" class="form-label"></label>
+                <input asp-for="Time" class="form-control" step="1800" />
+                <div class="form-text">
+                    Times are in 30-minute increments (for example, 9:00, 9:30, 10:00).
+                </div>
+                <span class="text-danger" asp-validation-for="Time"></span>
+            </div>
 
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span class="text-danger" asp-validation-for="FullName"></span>
+            </div>
 
-			<div class="mb-3">
-				<label asp-for="Time" class="form-label"></label>
-				<input asp-for="Time" class="form-control" />
-				<span class="text-danger" asp-validation-for="Time"></span>
-			</div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span class="text-danger" asp-validation-for="Email"></span>
+            </div>
 
+            <div class="mb-3">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" placeholder="Optional" />
+                <span class="text-danger" asp-validation-for="Phone"></span>
+            </div>
 
-			<div class="mb-3">
-				<label asp-for="FullName" class="form-label"></label>
-				<input asp-for="FullName" class="form-control" placeholder="Your name" />
-				<span class="text-danger" asp-validation-for="FullName"></span>
-			</div>
-
-
-			<div class="mb-3">
-				<label asp-for="Email" class="form-label"></label>
-				<input asp-for="Email" class="form-control" placeholder="you@example.com" />
-				<span class="text-danger" asp-validation-for="Email"></span>
-			</div>
-
-
-			<div class="mb-3">
-				<label asp-for="Phone" class="form-label"></label>
-				<input asp-for="Phone" class="form-control" placeholder="Optional" />
-				<span class="text-danger" asp-validation-for="Phone"></span>
-			</div>
-
-
-			<button type="submit" class="btn btn-primary">Book Now</button>
-		</form>
-	</div>
+            <button type="submit" class="btn btn-primary">Book Now</button>
+        </form>
+    </div>
 </div>
 
-
 @section Scripts {
-	<partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial" />
 }

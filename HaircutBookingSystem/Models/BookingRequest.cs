@@ -9,6 +9,10 @@ namespace HaircutBookingSystem.Models
         [Display(Name = "Service")]
         public int ServiceId { get; set; }
 
+        //double check for "stylistid"
+        [Required(ErrorMessage = "Please choose a stylist.")]
+        [Display(Name = "Preferred Stylist")]
+        public int StylistId { get; set; }
 
         [Required(ErrorMessage = "Please choose a date.")]
         [DataType(DataType.Date)]

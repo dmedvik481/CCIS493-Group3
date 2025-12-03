@@ -1,0 +1,22 @@
+﻿@{
+    ViewData["Title"] = "Appointment Unavailable";
+
+    var name = TempData["CustomerName"] as string ?? "Friend";
+    var service = TempData["ServiceName"] as string ?? "Service";
+    var stylist = TempData["StylistName"] as string ?? "a stylist";
+    var date = TempData["DateText"] as string ?? "(date)";
+    var time = TempData["TimeText"] as string ?? "(time)";
+}
+
+<div class="mt-4">
+    <h1>Sorry, @name!</h1>
+
+    <p>
+        The appointment for <strong>@service</strong> with <strong>@stylist</strong>
+        on <strong>@date</strong> at <strong>@time</strong> is not available.
+    </p>
+
+    <p>Please pick a different time or stylist and try again.</p>
+
+    <a class="btn btn-primary mt-3" asp-controller="Booking" asp-action="Index">Choose another time</a>
+</div>
