@@ -1,15 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
 namespace HaircutBookingSystem.Models
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : base(options) { }
+        : base(options) 
+        {
+        }
 
         public DbSet<Service> Services => Set<Service>();
+
+        public DbSet<Stylist> Stylists { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
