@@ -1,0 +1,40 @@
+﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
+
+<p><a asp-action="Register">Add a user</a></p>
+@{
+    if (Model.Count() < 1)
+    {
+        <p>No user in database yet.</p>
+    }
+    else
+    {
+        <h3>All Users</h3>
+        <table border="1">
+            <tr>
+                <th>User Name</th>
+                <th>Assigned Roles</th>
+                <th>Add Role</th>
+            </tr>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.UserName</td>
+                    <td>
+                        @{
+                            var userRoles = ViewBag.UserRoles as Dictionary<string, List<string>>;
+                            if (userRoles.ContainsKey(user.Id))
+                            {
+                                var roles = userRoles[user.Id];
+                                <text>@string.Join(", ", roles)</text>
+                            }
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="Role" asp-action="AddUserRole"
+                           asp-route-id="@user.Id">Add Role</a>
+                    </td>
+                </tr>
+            }
+        </table>
+    }
+}

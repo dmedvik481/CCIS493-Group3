@@ -1,0 +1,11 @@
+﻿@model HaircutBookingSystem.Models.Stylist
+
+<h2>Add Your Profile</h2>
+<form asp-controller="Stylist" asp-action="AddProfile" method="post">
+    <input asp-for="@Model.UserId" type="hidden" />
+    <label asp-for="StylistName"></label>
+    <input asp-for="StylistName" />
+    <br />
+</form>
+
+<p><a acp-action="Index">Back to Stylist Home</a></p>

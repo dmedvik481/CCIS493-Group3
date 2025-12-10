@@ -1,0 +1,11 @@
+﻿@model List<string>
+
+<form method="post" asp-action="SetRole">
+    <select name="SelectedRole">
+        @foreach (var role in Model)
+        {
+            <option value="@role">@role</option>
+        }
+    </select>
+    <input type="submit" value="Select Role" />
+</form>

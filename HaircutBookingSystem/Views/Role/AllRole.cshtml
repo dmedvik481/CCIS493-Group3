@@ -1,0 +1,23 @@
+﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityRole>
+<p><a asp-action="AddRole">Add a role</a></p>
+@{
+    if (Model.Count() < 1)
+    {
+        <p>No role in database yet.</p>
+    }
+    else
+    {
+        <h3>All Roles</h3>
+        <table border="1">
+            <tr>
+                <th>Role Name</th>
+            </tr>
+            @foreach (var role in Model)
+            {
+                <tr>
+                    <td>@role.Name</td>
+                </tr>
+            }
+        </table>
+    }
+}

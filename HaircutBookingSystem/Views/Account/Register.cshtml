@@ -1,0 +1,20 @@
+﻿@model HaircutBookingSystem.ViewModels.AccountRegisterViewModel
+
+<h2>User Registration</h2>
+<form asp-action="Register" method="post">
+    <div asp-validation-summary="All"></div>
+    <label asp-for="Email"></label>
+    <input asp-for="Email" />
+    <span asp-validation-for="Email"></span>
+    <br />
+    <label asp-for="Password"></label>
+    <input asp-for="Password" />
+    <span asp-validation-for="Password"></span>
+    <br />
+    <label asp-for="ConfirmPassword"></label>
+    <input asp-for="ConfirmPassword" />
+    <span asp-validation-for="ConfirmPassword"></span>
+    <br />
+    <button type="submit">Register</button>
+
+</form>

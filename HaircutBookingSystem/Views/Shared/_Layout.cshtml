@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="~/HaircutBookingSystem.styles.css" asp-append-version="true" />
 </head>
 <body>
+    @if (this.User.Identity.IsAuthenticated)
+    {
+        <div>Hello, @this.User.Identity.Name</div>          <form method="post" asp-controller="Account" asp-action="Logout">            <input type="submit" value="Logout" />
+        </form>    }
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
@@ -21,6 +25,9 @@
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Staff Login</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
