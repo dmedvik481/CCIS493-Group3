@@ -22,9 +22,9 @@ namespace HaircutBookingSystem.Controllers
         // In-memory list of stylists.
         private static readonly List<Stylist> _stylists = new()
         {
-            new Stylist { Id = 1, Name = "Alex" },
-            new Stylist { Id = 2, Name = "Jordan" },
-            new Stylist { Id = 3, Name = "Sam" }
+            new Stylist { StylistId = 1, StylistName = "Alex" },
+            new Stylist { StylistId = 2, StylistName = "Jordan" },
+            new Stylist { StylistId = 3, StylistName = "Sam" }
         };
 
         // Simple in-memory store for booked appointments.
@@ -71,7 +71,7 @@ namespace HaircutBookingSystem.Controllers
         public IActionResult Index()
         {
             ViewBag.ServiceList = new SelectList(_services, nameof(Service.Id), nameof(Service.Name));
-            ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.Id), nameof(Stylist.Name));
+            ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.StylistId), nameof(Stylist.StylistName));
 
             return View(new BookingRequest());
         }
@@ -82,7 +82,7 @@ namespace HaircutBookingSystem.Controllers
         {
             // Repopulate dropdowns when returning the view
             ViewBag.ServiceList = new SelectList(_services, nameof(Service.Id), nameof(Service.Name));
-            ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.Id), nameof(Stylist.Name));
+            ViewBag.StylistList = new SelectList(_stylists, nameof(Stylist.StylistId), nameof(Stylist.StylistName));
 
             // 1. Run all model-level validation first
             //    - Required, Range, email, phone
@@ -99,7 +99,7 @@ namespace HaircutBookingSystem.Controllers
             }
 
             // 3. Ensure the selected stylist actually exists
-            var chosenStylist = _stylists.FirstOrDefault(s => s.Id == model.StylistId);
+            var chosenStylist = _stylists.FirstOrDefault(s => s.StylistId == model.StylistId);
             if (chosenStylist == null)
             {
                 ModelState.AddModelError(nameof(model.StylistId), "The selected stylist is invalid.");
@@ -133,7 +133,7 @@ namespace HaircutBookingSystem.Controllers
             {
                 TempData["CustomerName"] = model.FullName;
                 TempData["ServiceName"] = chosenService.Name;
-                TempData["StylistName"] = chosenStylist.Name;
+                TempData["StylistName"] = chosenStylist.StylistName;
                 TempData["DateText"] = dateText;
                 TempData["TimeText"] = timeText;
 
@@ -152,7 +152,7 @@ namespace HaircutBookingSystem.Controllers
             // Pass booking details to the success page (screen-only confirmation)
             TempData["CustomerName"] = model.FullName;
             TempData["ServiceName"] = chosenService.Name;
-            TempData["StylistName"] = chosenStylist.Name;
+            TempData["StylistName"] = chosenStylist.StylistName;
             TempData["DateText"] = dateText;
             TempData["TimeText"] = timeText;
 
