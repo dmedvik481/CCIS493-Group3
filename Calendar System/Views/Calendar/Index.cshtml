@@ -1,0 +1,311 @@
+﻿@model CalendarDemo.Models.CalendarViewModel
+@{
+    ViewData["Title"] = "Calendar";
+    var year = Model.Year;
+    var month = Model.Month;
+    var firstOfMonth = new DateTime(year, month, 1);
+    var daysInMonth = DateTime.DaysInMonth(year, month);
+    var startDayOfWeek = (int)firstOfMonth.DayOfWeek; // 0=Sunday
+    var monthName = firstOfMonth.ToString("MMMM yyyy");
+    string DateKey(int d) => new DateTime(year, month, d).ToString("yyyy-MM-dd");
+    var noteMap = Model.Notes.ToDictionary(n => n.Date.ToString("yyyy-MM-dd"), n => n.Note);
+}
+
+
+<div class="calendar-container">
+    <div class="calendar-header">
+        <form method="get" class="nav-form">
+            <input type="hidden" name="year" value="@(month == 1 ? year - 1 : year)" />
+            <input type="hidden" name="month" value="@(month == 1 ? 12 : month - 1)" />
+            <button type="submit" class="nav-btn">◀</button>
+        </form>
+        <div class="month-title">@monthName</div>
+        <form method="get" class="nav-form">
+            <input type="hidden" name="year" value="@(month == 12 ? year + 1 : year)" />
+            <input type="hidden" name="month" value="@(month == 12 ? 1 : month + 1)" />
+            <button type="submit" class="nav-btn">▶</button>
+        </form>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div>
+        <div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+
+        @for (int i = 0; i < startDayOfWeek; i++)
+        {
+            <div class="cell empty"></div>
+        }
+
+        @for (int d = 1; d <= daysInMonth; d++)
+        {
+            var key = DateKey(d);
+            var hasNote = noteMap.ContainsKey(key) && !string.IsNullOrWhiteSpace(noteMap[key]);
+            <div class="cell day"
+                 data-date="@key"
+                 aria-label="@key"
+                 tabindex="0">
+                <span class="day-number">@d</span>
+                @if (hasNote)
+                {
+                    <span class="dot" title="Has note"></span>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="panel">
+        <h3>Selected dates</h3>
+        <div id="selectedList" class="selected-list"></div>
+
+        <h3>Notes</h3>
+        <div id="notesArea" class="notes-area">
+            <div class="notes-hint">Select one or more dates to add or edit notes.</div>
+        </div>
+    </div>
+    <h3>Notes for Next 14 Days</h3>
+
+    <table class="table table-bordered" id="upcomingTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="2">Loading…</td></tr>
+        </tbody>
+    </table>
+
+    </table>
+
+</div>
+
+@section Styles {
+    <style>
+        :root { --accent:#2563eb; --accent-2:#1e40af; --bg:#ffffff; --muted:#f3f4f6; --text:#111827; --sub:#6b7280; --danger:#b91c1c; }
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: var(--text); }
+        .calendar-container { max-width: 900px; margin: 24px auto; padding: 16px; background: var(--bg); border: 1px solid #e5e7eb; border-radius: 12px; }
+        .calendar-header { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; margin-bottom: 12px; }
+        .month-title { text-align: center; font-weight: 600; letter-spacing: .4px; }
+        .nav-form { display:flex; }
+        .nav-btn { width: 100%; height: 36px; border: 1px solid #e5e7eb; border-radius: 8px; background: var(--muted); cursor: pointer; }
+        .nav-btn:hover { background: #e5e7eb; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .dow { text-align:center; font-size: 12px; color: var(--sub); padding: 4px 0; }
+        .cell { min-height: 80px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fafafa; padding: 8px; position: relative; }
+        .cell.empty { background: transparent; border-color: transparent; }
+        .cell.day { cursor: pointer; }
+        .cell.day.selected { outline: 2px solid var(--accent); background: #eef2ff; }
+        .cell.day:focus { outline: 2px solid var(--accent-2); }
+        .day-number { font-weight: 600; font-size: 14px; }
+        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; position: absolute; right: 8px; bottom: 8px; }
+
+        .panel { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .selected-list { min-height: 48px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background:#fafafa; display:flex; flex-wrap: wrap; gap: 6px; }
+        .selected-pill { padding: 6px 10px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 999px; font-size: 12px; display:flex; align-items:center; gap:8px; }
+        .remove-pill { background: transparent; border:none; cursor:pointer; color: var(--accent-2); font-weight:600; }
+
+        .notes-area { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background:#fafafa; }
+        .note-entry { display:grid; grid-template-columns: 140px 1fr auto auto; gap:8px; align-items:start; padding:8px; border-bottom:1px dashed #e5e7eb; }
+        .note-entry:last-child { border-bottom:none; }
+        .note-date { font-weight:600; color: var(--accent-2); }
+        .note-text { width: 100%; min-height: 64px; resize: vertical; padding: 8px; border:1px solid #e5e7eb; border-radius:8px; }
+        .btn { padding: 8px 12px; border-radius:8px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; }
+        .btn.save { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn.delete { background: #fff; color: var(--danger); border-color: #fecaca; }
+        .btn:disabled { opacity:.6; cursor:not-allowed; }
+        .notes-hint { color:var(--sub); font-size: 13px; }
+        media (max-width: 760px) {
+          .panel { grid-template-columns: 1fr; }
+          .note-entry { grid-template-columns: 1fr; }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        (function(){
+          const selected = new Set();
+          const grid = document.querySelector('.calendar-grid');
+          const selectedList = document.getElementById('selectedList');
+          const notesArea = document.getElementById('notesArea');
+
+          function fmt(dateStr) {
+            // Ensure yyyy-MM-dd
+            return dateStr;
+          }
+
+          function renderSelected() {
+            selectedList.innerHTML = '';
+            if (selected.size === 0) {
+              selectedList.innerHTML = '<span class="notes-hint">No dates selected.</span>';
+              notesArea.innerHTML = '<div class="notes-hint">Select one or more dates to add or edit notes.</div>';
+              return;
+            }
+            [...selected].sort().forEach(d => {
+              const pill = document.createElement('div');
+              pill.className = 'selected-pill';
+              pill.innerHTML = `<span>${d}</span><button class="remove-pill" aria-label="Remove ${d}" data-date="${d}">×</button>`;
+              selectedList.appendChild(pill);
+            });
+            renderNotes();
+          }
+
+          function renderNotes() {
+            const dates = [...selected].sort();
+            notesArea.innerHTML = '';
+            dates.forEach(d => {
+              const noteEntry = document.createElement('div');
+              noteEntry.className = 'note-entry';
+              noteEntry.innerHTML = `
+                <div class="note-date">${d}</div>
+                <textarea class="note-text" data-date="${d}" placeholder="Write a note for ${d}"></textarea>
+                <button class="btn save" data-date="${d}">Save</button>
+                <button class="btn delete" data-date="${d}">Delete</button>
+              `;
+              notesArea.appendChild(noteEntry);
+            });
+            // Preload notes from server for the month
+            preloadNotesForSelected();
+          }
+
+          async function preloadNotesForSelected() {
+            if (selected.size === 0) return;
+            const any = [...selected][0];
+            const [y, m] = any.split('-').map(Number);
+            try {
+              const resp = await fetch(`/Calendar/MonthNotes?year=${y}&month=${m}`);
+              const list = await resp.json();
+              const map = Object.fromEntries(list.map(x => [x.date, x.note]));
+              document.querySelectorAll('.note-text').forEach(t => {
+                const d = t.getAttribute('data-date');
+                if (map[d]) t.value = map[d];
+              });
+            } catch(e) { /* silently ignore */ }
+          }
+
+          function toggleDay(cell) {
+            const d = fmt(cell.dataset.date);
+            if (selected.has(d)) {
+              selected.delete(d);
+              cell.classList.remove('selected');
+            } else {
+              selected.add(d);
+              cell.classList.add('selected');
+            }
+            renderSelected();
+          }
+
+          grid.addEventListener('click', (ev) => {
+            const cell = ev.target.closest('.cell.day');
+            if (cell) toggleDay(cell);
+          });
+
+          grid.addEventListener('keydown', (ev) => {
+            const cell = ev.target.closest('.cell.day');
+            if (!cell) return;
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault();
+              toggleDay(cell);
+            }
+          });
+
+          selectedList.addEventListener('click', (ev) => {
+            const btn = ev.target.closest('.remove-pill');
+            if (!btn) return;
+            const d = btn.getAttribute('data-date');
+            selected.delete(d);
+            const cell = document.querySelector(`.cell.day[data-date="${d}"]`);
+            if (cell) cell.classList.remove('selected');
+            renderSelected();
+          });
+
+          notesArea.addEventListener('click', async (ev) => {
+            const saveBtn = ev.target.closest('.btn.save');
+            const delBtn = ev.target.closest('.btn.delete');
+            if (saveBtn) {
+              const d = saveBtn.getAttribute('data-date');
+              const ta = notesArea.querySelector(`.note-text[data-date="${d}"]`);
+              const note = ta.value;
+              saveBtn.disabled = true;
+              try {
+                const form = new URLSearchParams();
+                form.append('date', d);
+                form.append('note', note);
+                const resp = await fetch('/Calendar/SaveNote', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form });
+                if (resp.ok) {
+                  markHasNote(d, !!note.trim());
+                }
+              } finally {
+                saveBtn.disabled = false;
+              }
+            }
+            if (delBtn) {
+              const d = delBtn.getAttribute('data-date');
+              const ta = notesArea.querySelector(`.note-text[data-date="${d}"]`);
+              delBtn.disabled = true;
+              try {
+                const form = new URLSearchParams();
+                form.append('date', d);
+                const resp = await fetch('/Calendar/DeleteNote', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form });
+                if (resp.ok) {
+                  ta.value = '';
+                  markHasNote(d, false);
+                }
+              } finally {
+                delBtn.disabled = false;
+              }
+            }
+          });
+
+          function markHasNote(dateStr, has) {
+            const cell = document.querySelector(`.cell.day[data-date="${dateStr}"]`);
+            if (!cell) return;
+            let dot = cell.querySelector('.dot');
+            if (has && !dot) {
+              dot = document.createElement('span');
+              dot.className = 'dot';
+              dot.title = 'Has note';
+              cell.appendChild(dot);
+            } else if (!has && dot) {
+              dot.remove();
+            }
+          }
+        })();
+
+                async function refreshUpcomingTable() {
+          try {
+            const resp = await fetch('/Calendar/UpcomingNotes');
+            const list = await resp.json();
+            const tbody = document.querySelector('#upcomingTable tbody');
+            tbody.innerHTML = '';
+            if (list.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="2">No notes for the next 14 days.</td></tr>';
+            } else {
+              list.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${item.date}</td><td>${item.note}</td>`;
+                tbody.appendChild(tr);
+              });
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        // Initial load
+        refreshUpcomingTable();
+
+        // Hook into save/delete events
+        notesArea.addEventListener('click', async (ev) => {
+          const saveBtn = ev.target.closest('.btn.save');
+          const delBtn = ev.target.closest('.btn.delete');
+          if (saveBtn || delBtn) {
+            // Let the existing save/delete logic run first
+            setTimeout(refreshUpcomingTable, 300); // refresh after short delay
+          }
+        });
+    </script>
+}
