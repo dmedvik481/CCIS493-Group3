@@ -1,49 +1,62 @@
 ﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
 @{
     ViewData["Title"] = "All Users";
-    var userRoles = ViewBag.UserRoles as Dictionary<string, List<string>> ?? new();
 }
 
-<div class="auth-wrap mt-4">
-    <div class="auth-card" style="max-width: 1000px;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="m-0">All Users</h1>
-            <a class="btn btn-primary btn-cta" asp-action="Register">Add User</a>
-        </div>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <h1>All Users</h1>
 
-        @if (Model == null || !Model.Any())
+        @if (ViewBag.ErrMessage != null)
         {
-            <div class="alert alert-info mb-0">No user in database yet.</div>
+            <div class="alert alert-danger">@ViewBag.ErrMessage</div>
+        }
+        @if (ViewBag.OkMessage != null)
+        {
+            <div class="alert alert-success">@ViewBag.OkMessage</div>
+        }
+
+        <p><a class="btn btn-primary btn-cta" asp-action="Register">Add a user</a></p>
+
+        @if (!Model.Any())
+        {
+            <p>No users in database yet.</p>
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-dark table-striped align-middle mb-0">
-                    <thead>
+            <table class="table table-dark table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Assigned Roles</th>
+                        <th class="text-end">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        var userRoles = ViewBag.UserRoles as Dictionary<string, List<string>>;
+                        var roles = (userRoles != null && userRoles.ContainsKey(user.Id))
+                        ? string.Join(", ", (IEnumerable<string>)userRoles[user.Id])
+                        : "";
+
                         <tr>
-                            <th>User Name</th>
-                            <th>Assigned Roles</th>
-                            <th class="text-end">Actions</th>
+                            <td>@user.UserName</td>
+                            <td>@roles</td>
+                            <td class="text-end">
+                                <form asp-action="DeleteUser" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Delete @user.UserName ?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var user in Model)
-                        {
-                            var roles = userRoles.ContainsKey(user.Id) ? string.Join(", ", userRoles[user.Id]) : "—";
-                            <tr>
-                                <td>@user.UserName</td>
-                                <td>@roles</td>
-                                <td class="text-end">
-                                    <a class="btn btn-outline-light btn-sm"
-                                       asp-controller="Role" asp-action="AddUserRole" asp-route-id="@user.Id">
-                                        Add Role
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                </tbody>
+            </table>
         }
     </div>
 </div>

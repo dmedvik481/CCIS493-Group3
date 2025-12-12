@@ -9,7 +9,7 @@
 }
 
 <div class="mt-4">
-    <h1>Sorry, @name!</h1>
+    <h1>Sorry, @name, your appointment was NOT booked</h1>
 
     <p>
         The appointment for <strong>@service</strong> with <strong>@stylist</strong>
@@ -17,6 +17,7 @@
     </p>
 
     <p>Please pick a different time or stylist and try again.</p>
+    <p>Be sure to use 30-minute increments when selecting a time.</p>
 
     <a class="btn btn-primary mt-3" asp-controller="Booking" asp-action="Index">Choose another time</a>
 </div>

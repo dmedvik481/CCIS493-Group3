@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HaircutBookingSystem.Models;
@@ -45,11 +46,6 @@ namespace HaircutBookingSystem.Controllers
 
             if (result.Succeeded)
             {
-                // Optional: ensure basic role exists and assign (uncomment if needed)
-                // if (!await _roleManager.RoleExistsAsync("Client"))
-                //     await _roleManager.CreateAsync(new IdentityRole("Client"));
-                // await _userManager.AddToRoleAsync(user, "Client");
-
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 return RedirectToAction("Index", "Home");
             }
@@ -97,13 +93,52 @@ namespace HaircutBookingSystem.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult AllUser()
         {
-            var users = _db.Users.ToList();
+            // Use Identity users, not business users
+            var users = _userManager.Users.ToList();
             var userRoles = new Dictionary<string, List<string>>();
+
             foreach (var u in users)
                 userRoles[u.Id] = _userManager.GetRolesAsync(u).Result.ToList();
 
             ViewBag.UserRoles = userRoles;
+
+            // TempData messages (optional)
+            ViewBag.OkMessage = TempData["Ok"] as string;
+            ViewBag.ErrMessage = TempData["Error"] as string;
+
             return View(users);
+        }
+
+        // ---------- ADMIN: DELETE USER ----------
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            // guardrails: prevent deleting root or self
+            if (string.Equals(user.UserName, "root", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["Error"] = "Root account cannot be deleted.";
+                return RedirectToAction(nameof(AllUser));
+            }
+            if (string.Equals(user.Id, _userManager.GetUserId(User), StringComparison.Ordinal))
+            {
+                TempData["Error"] = "You cannot delete your own account.";
+                return RedirectToAction(nameof(AllUser));
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded)
+                TempData["Ok"] = "User deleted.";
+            else
+                TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
+
+            return RedirectToAction(nameof(AllUser));
         }
 
         // ---------- ROLE PICKER (when a user has multiple roles) ----------

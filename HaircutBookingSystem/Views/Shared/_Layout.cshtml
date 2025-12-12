@@ -3,7 +3,13 @@
   Left: Book Now  |  Center: Home/Book/Services/About/Contact  |  Right: Hello + Logout (blue)
   Collapses under hamburger on mobile.
 *@
+@using Microsoft.AspNetCore.Identity
+@using HaircutBookingSystem.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -66,6 +72,11 @@
             </div>
         </nav>
     </header>
+
+    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+    {
+        await Html.RenderPartialAsync("_AdminNav");
+    }
 
     <div class="container">
         <main role="main" class="pb-3">
