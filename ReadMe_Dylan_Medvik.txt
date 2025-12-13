@@ -1,16 +1,26 @@
 #HaircutBookingSystem
 
-Sprint I Tasks
+Sprint III Tasks
 
-Conducted work on user story 7. Ran into issues integrating with database and maintaining persistance over multiple sessions.
-Conducted troubleshooting with group mates regarding user story 7 in an attempt to progress further.
-Issue persisted and fellow group mates decided it would be ideal to move the story to Sprint 3 in order to iron out issues with
-database system.
+Created various controllers to control views and models (Account, Admin, Role, and Stylist)
+Added corresponding models for ApplicationUser and Stylists
+Created ViewModels for login, registration, and adding user roles
+Added various Views for the controllers
+  Account
+    AllUsers
+    Login
+    Register
+    SelectRole
+  Admin
+    Manage
+  Role
+    AddRole
+    AddUserRole
+    AllRole
+  Stylist
+    AddProfile
+    Index
 
-Tested completed modules that are currently uploaded to GitHub to include database. Compatability issues were found with
-the database. Codebase was rolled back collectively in order to resume working from an operational position.
-
-Helped conduct planning for Sprint 3, reorganizing the user stories appropriately.
-Identified which stories were behind and which stories remained for the final sprint.
-Assigned stories to each member of the group to appropriatley complete remaining stories. 
+Created, but did not fully implement a interactive calendar that allows date selection, adding notes to dates, and a table displaying upcoming events within 14 days.
+Calendar intent was to be interactive for Admin/Owner accounts as to set schedules and then display a static version to Stylists so they are aware of events.
 
