@@ -73,9 +73,13 @@
         </nav>
     </header>
 
-    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+    @if (User?.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
     {
         await Html.RenderPartialAsync("_AdminNav");
+    }
+    else if (User?.Identity?.IsAuthenticated == true && User.IsInRole("Stylist"))
+    {
+        await Html.RenderPartialAsync("_StylistNav");
     }
 
     <div class="container">

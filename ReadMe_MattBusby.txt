@@ -13,11 +13,13 @@ UserStory6 - Complete
   - Clients will be informed if the appointment slot is unavailable.
   - Appointments are saved to DB
 
-UserStory10 - Working
+UserStory10 - Complete
   - Root account created with a switch for disabling the account
   - This is in place for testing and building the initial Owner/Admin account
   - Administrator Navbar added for users with the Admin Role
   - Having trouble with the appointment Management piece. Database integration is causing a hurdle for me.
+  - Admins can delete appointments and add unavailability for stylists
+  - Stylists can view the appointment calendar
 
 UserStory14 - Complete
   - Users can easily navigate the page.

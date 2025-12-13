@@ -1,0 +1,211 @@
+﻿@model HaircutBookingSystem.ViewModels.CalendarAppointmentsViewModel
+
+@{
+    ViewData["Title"] = "Manage Calendar";
+}
+
+<h1>Manage Calendar</h1>
+
+<div class="auth-wrap">
+    <div class="auth-card">
+
+        <form method="get" asp-controller="Calendar" asp-action="Manage" class="mb-3">
+            <label class="form-label">Filter by Stylist</label>
+
+            <select class="form-select" name="stylistId" style="max-width:320px; margin:0 auto;"
+                    onchange="this.form.submit()">
+                @foreach (var s in Model.Stylists)
+                {
+                    <option value="@s.Value" selected="@(s.Selected ? "selected" : null)">@s.Text</option>
+                }
+            </select>
+
+            <noscript>
+                <div class="mt-2">
+                    <button type="submit" class="btn btn-primary btn-cta">Filter</button>
+                </div>
+            </noscript>
+        </form>
+
+        <hr />
+
+        <h4>Add Unavailability</h4>
+
+        <form method="post" asp-controller="Calendar" asp-action="CreateUnavailability" class="row g-2 mb-4">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="selectedStylistId" value="@(Model.SelectedStylistId ?? 0)" />
+
+            <div class="col-md-4">
+                <label class="form-label">Stylist</label>
+                <select class="form-select" name="stylistId" required>
+                    @foreach (var s in Model.Stylists.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
+                    {
+                        <option value="@s.Value">@s.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input class="form-control" type="date" name="startDate" required />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Start Time</label>
+                <input class="form-control" type="time" name="startTime" step="1800" />
+            </div>
+
+            <div class="col-md-1 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="startAllDay" value="true" id="startAllDay" />
+                    <label class="form-check-label" for="startAllDay">All Day</label>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input class="form-control" type="date" name="endDate" required />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">End Time</label>
+                <input class="form-control" type="time" name="endTime" step="1800" />
+            </div>
+
+            <div class="col-md-1 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="endAllDay" value="true" id="endAllDay" />
+                    <label class="form-check-label" for="endAllDay">All Day</label>
+                </div>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-danger w-100" type="submit">Add</button>
+            </div>
+        </form>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const startAllDay = document.getElementById("startAllDay");
+                const endAllDay = document.getElementById("endAllDay");
+                const startTime = document.querySelector('input[name="startTime"]');
+                const endTime = document.querySelector('input[name="endTime"]');
+
+                function sync() {
+                    startTime.disabled = startAllDay.checked;
+                    endTime.disabled = endAllDay.checked;
+                }
+
+                startAllDay.addEventListener("change", sync);
+                endAllDay.addEventListener("change", sync);
+                sync();
+            });
+        </script>
+
+        <hr />
+
+        <h4 class="mt-2">Booked Appointments</h4>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Full Name</th>
+                        <th>Service</th>
+                        <th>Email Address</th>
+                        <th>Phone (optional)</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Rows == null || Model.Rows.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No appointments found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>@r.StartTime.ToString("yyyy-MM-dd")</td>
+                                <td>@r.StartTime.ToString("hh:mm tt")</td>
+                                <td>@r.FullName</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.Service) ? "—" : r.Service)</td>
+                                <td>@r.Email</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.Phone) ? "—" : r.Phone)</td>
+                                <td class="text-end">
+                                    @if (r.AppointmentId.HasValue)
+                                    {
+                                        <form method="post" asp-controller="Calendar" asp-action="DeleteAppointment" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@r.AppointmentId.Value" />
+                                            <input type="hidden" name="stylistId" value="@(Model.SelectedStylistId ?? 0)" />
+                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('Delete this appointment?');">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <hr />
+
+        <h4>Stylist Unavailabilities</h4>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Stylist</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Unavailabilities == null || Model.Unavailabilities.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No unavailabilities submitted.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var u in Model.Unavailabilities)
+                        {
+                            <tr>
+                                <td>@u.StylistName</td>
+                                <td>@u.StartDateTime.ToString("yyyy-MM-dd hh:mm tt")</td>
+                                <td>@u.EndDateTime.ToString("yyyy-MM-dd hh:mm tt")</td>
+                                <td class="text-end">
+                                    <form method="post" asp-controller="Calendar" asp-action="DeleteUnavailability" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <input type="hidden" name="stylistId" value="@(Model.SelectedStylistId ?? 0)" />
+                                        <button type="submit" class="btn btn-outline-warning btn-sm"
+                                                onclick="return confirm('Remove this unavailability?');">
+                                            Remove
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>

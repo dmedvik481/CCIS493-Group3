@@ -4,6 +4,7 @@ using HaircutBookingSystem.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HaircutBookingSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251213214249_AddAppointments")]
+    partial class AddAppointments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -181,55 +184,6 @@ namespace HaircutBookingSystem.Migrations
                     b.ToTable("Stylists");
                 });
 
-            modelBuilder.Entity("HaircutBookingSystem.Models.StylistUnavailability", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("EndDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("StartDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("StylistId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StylistId");
-
-                    b.ToTable("StylistUnavailabilities");
-                });
-
-            modelBuilder.Entity("HaircutBookingSystem.Models.UnavailableSlot", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("StylistId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StylistId", "StartTime")
-                        .IsUnique();
-
-                    b.ToTable("UnavailableSlots");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -378,28 +332,6 @@ namespace HaircutBookingSystem.Migrations
                         .IsRequired();
 
                     b.Navigation("Service");
-
-                    b.Navigation("Stylist");
-                });
-
-            modelBuilder.Entity("HaircutBookingSystem.Models.StylistUnavailability", b =>
-                {
-                    b.HasOne("HaircutBookingSystem.Models.Stylist", "Stylist")
-                        .WithMany()
-                        .HasForeignKey("StylistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Stylist");
-                });
-
-            modelBuilder.Entity("HaircutBookingSystem.Models.UnavailableSlot", b =>
-                {
-                    b.HasOne("HaircutBookingSystem.Models.Stylist", "Stylist")
-                        .WithMany()
-                        .HasForeignKey("StylistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("Stylist");
                 });

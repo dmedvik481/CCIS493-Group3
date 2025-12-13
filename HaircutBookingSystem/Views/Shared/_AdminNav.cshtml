@@ -6,6 +6,12 @@
         <a asp-controller="Admin" asp-action="Manage" class="admin-nav__link">Manage</a>
         <a asp-controller="Account" asp-action="AllUser" class="admin-nav__link">All Users</a>
         <a asp-controller="Role" asp-action="AllRole" class="admin-nav__link">All Roles</a>
+        <a class="btn btn-outline-primary me-2" asp-controller="Calendar" asp-action="Index">
+            View Calendar
+        </a>
+        <a class="btn btn-outline-warning me-2" asp-controller="Calendar" asp-action="Manage">
+            Manage Calendar
+        </a>
 
         @* NOTE: If your AddUserRole action requires an id, this link will route but the page
        should prompt you to pick a user first (or you can navigate from All Users). *@
