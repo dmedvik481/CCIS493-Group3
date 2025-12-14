@@ -4,16 +4,9 @@ namespace HaircutBookingSystem.Controllers
 {
     public class HomeController : Controller
     {
-        // Main landing page
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        // Privacy page (optional, for nav/footer links)
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        public IActionResult Index() => View();
+        public IActionResult Services() => View();   // list services / pricing
+        public IActionResult About() => View();
+        public IActionResult Contact() => View();
     }
 }

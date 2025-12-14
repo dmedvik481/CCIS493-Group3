@@ -1,0 +1,52 @@
+﻿@model HaircutBookingSystem.ViewModels.RoleAddUserRoleViewModel
+@{
+    ViewData["Title"] = "Assign Role";
+}
+<div class="auth-wrap">
+    <div class="auth-card" style="max-width:560px;">
+        <h1>Assign Role</h1>
+
+        @if (Model.User != null)
+        {
+            <p class="mb-3">Assign a role to <strong>@Model.User.Email</strong></p>
+            <form asp-action="AddUserRole" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="User.Id" />
+                <div class="mb-3">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select" asp-items="Model.RoleList">
+                        <option value="">-- Select a role --</option>
+                    </select>
+                    <span class="text-danger" asp-validation-for="Role"></span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-cta w-100">Add Role</button>
+            </form>
+        }
+        else
+        {
+            <p class="mb-3">Select a user and a role.</p>
+            <form asp-action="AddUserRole" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label asp-for="SelectedUserId" class="form-label"></label>
+                    <select asp-for="SelectedUserId" class="form-select" asp-items="Model.UserList">
+                        <option value="">-- Select a user --</option>
+                    </select>
+                    <span class="text-danger" asp-validation-for="SelectedUserId"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select" asp-items="Model.RoleList">
+                        <option value="">-- Select a role --</option>
+                    </select>
+                    <span class="text-danger" asp-validation-for="Role"></span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-cta w-100">Add Role</button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

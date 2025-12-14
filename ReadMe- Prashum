@@ -38,3 +38,22 @@ What is not working / still to be done:
 - No actual email sending yet (reminders only displayed for testing).
 - No real database integration — system still uses in-memory lists.
 - Reminder logic will need to be connected to real appointments after DB is added.
+
+Sprint 3
+
+What I completed:
+- Created the automated testing project: HaircutBookingSystem.Tests
+- Developed unit tests focused on critical booking validation rules:
+- Detecting past dates and times
+- Enforcing booking within opening hours (9 AM–5 PM)
+- Ensuring valid bookings pass all server-side validation
+
+Testing Approach:
+- Used xUnit for automated testing
+- Validated the BookingRequest model directly to confirm correct server-side behavior
+- Ensured tests were independent, repeatable, and required no external database
+
+Results:
+- All automated tests passed successfully
+- Core booking flow is now protected by automated validation
+- This strengthens reliability of the final product and ensures consistent behavior if code is modified later

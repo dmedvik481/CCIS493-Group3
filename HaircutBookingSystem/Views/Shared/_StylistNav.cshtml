@@ -1,0 +1,15 @@
+﻿@* Shows only when called by Layout if the user is in the Stylist role *@
+<nav class="admin-nav">
+    <div class="admin-nav__inner">
+        <span class="admin-nav__title">Stylist Tools</span>
+
+        <a class="btn btn-outline-primary me-2" asp-controller="Calendar" asp-action="Index">
+            View Calendar
+        </a>
+
+        @* Add stylist links later if you want, using the same style *@
+        @*
+        <a asp-controller="Stylist" asp-action="MyAppointments" class="admin-nav__link">My Appointments</a>
+        *@
+    </div>
+</nav>

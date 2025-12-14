@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HaircutBookingSystem", "HaircutBookingSystem\HaircutBookingSystem.csproj", "{6C459B5F-26C8-4C03-8495-5E5C5EDD3B8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HaircutBookingSystem.Tests", "HaircutBookingSystem.Tests\HaircutBookingSystem.Tests.csproj", "{D6D66948-9C05-4600-B34D-E5CB077338F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{6C459B5F-26C8-4C03-8495-5E5C5EDD3B8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C459B5F-26C8-4C03-8495-5E5C5EDD3B8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C459B5F-26C8-4C03-8495-5E5C5EDD3B8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6D66948-9C05-4600-B34D-E5CB077338F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6D66948-9C05-4600-B34D-E5CB077338F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6D66948-9C05-4600-B34D-E5CB077338F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6D66948-9C05-4600-B34D-E5CB077338F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8C5004FB-4327-40F8-A258-28C5FA673A25}
 	EndGlobalSection
 EndGlobal

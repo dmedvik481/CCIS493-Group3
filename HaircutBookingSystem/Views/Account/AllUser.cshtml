@@ -1,0 +1,62 @@
+﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
+@{
+    ViewData["Title"] = "All Users";
+}
+
+<div class="auth-wrap">
+    <div class="auth-card">
+        <h1>All Users</h1>
+
+        @if (ViewBag.ErrMessage != null)
+        {
+            <div class="alert alert-danger">@ViewBag.ErrMessage</div>
+        }
+        @if (ViewBag.OkMessage != null)
+        {
+            <div class="alert alert-success">@ViewBag.OkMessage</div>
+        }
+
+        <p><a class="btn btn-primary btn-cta" asp-action="Register">Add a user</a></p>
+
+        @if (!Model.Any())
+        {
+            <p>No users in database yet.</p>
+        }
+        else
+        {
+            <table class="table table-dark table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Assigned Roles</th>
+                        <th class="text-end">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        var userRoles = ViewBag.UserRoles as Dictionary<string, List<string>>;
+                        var roles = (userRoles != null && userRoles.ContainsKey(user.Id))
+                        ? string.Join(", ", (IEnumerable<string>)userRoles[user.Id])
+                        : "";
+
+                        <tr>
+                            <td>@user.UserName</td>
+                            <td>@roles</td>
+                            <td class="text-end">
+                                <form asp-action="DeleteUser" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Delete @user.UserName ?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

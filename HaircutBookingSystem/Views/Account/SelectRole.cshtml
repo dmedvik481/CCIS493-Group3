@@ -1,0 +1,31 @@
+﻿@model List<string>
+@{
+    ViewData["Title"] = "Select Role";
+}
+
+<div class="auth-wrap mt-4">
+    <div class="auth-card">
+        <h1>Select Your Role</h1>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="alert alert-warning">No roles found for this account.</div>
+            <a class="btn btn-primary btn-cta w-100" asp-controller="Home" asp-action="Index">Go Home</a>
+        }
+        else
+        {
+            <form method="post" asp-action="SetRole" asp-antiforgery="true">
+                <div class="mb-3">
+                    <label for="SelectedRole" class="form-label">Role</label>
+                    <select name="SelectedRole" id="SelectedRole" class="form-select">
+                        @foreach (var role in Model)
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-cta w-100">Select Role</button>
+            </form>
+        }
+    </div>
+</div>
